@@ -184,17 +184,30 @@ class MaskSpadeDecoder(nn.Module):
         self.spade_blocks = []
 
         for i in range(self.num_layers):
-            self.spade_blocks.append(
-                SPADEResnetBlock(
-                    int(self.z_nc / (2 ** i)),
-                    int(self.z_nc / (2 ** (i + 1))),
-                    cond_nc,
-                    spade_use_spectral_norm,
-                    spade_param_free_norm,
-                    spade_kernel_size,
-                    spade_activation,
-                ).cuda()
-            )
+            if torch.cuda.is_available() :
+                self.spade_blocks.append(
+                    SPADEResnetBlock(
+                        int(self.z_nc / (2 ** i)),
+                        int(self.z_nc / (2 ** (i + 1))),
+                        cond_nc,
+                        spade_use_spectral_norm,
+                        spade_param_free_norm,
+                        spade_kernel_size,
+                        spade_activation,
+                    ).cuda()
+                )
+            else:
+                self.spade_blocks.append(
+                    SPADEResnetBlock(
+                        int(self.z_nc / (2 ** i)),
+                        int(self.z_nc / (2 ** (i + 1))),
+                        cond_nc,
+                        spade_use_spectral_norm,
+                        spade_param_free_norm,
+                        spade_kernel_size,
+                        spade_activation,
+                    ).cpu()
+                )
         self.spade_blocks = nn.Sequential(*self.spade_blocks)
 
         self.final_nc = int(self.z_nc / (2 ** self.num_layers))

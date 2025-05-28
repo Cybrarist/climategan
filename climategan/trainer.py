@@ -106,9 +106,12 @@ class Trainer:
         self.kitty_display_images = {}
         self.domain_labels = {"s": 0, "r": 1}
 
-        self.device = device or torch.device(
-            "cuda:0" if torch.cuda.is_available() else "cpu"
-        )
+        # self.device = device or torch.device(
+        #     "cuda:0" if torch.cuda.is_available() else "cpu"
+        # )
+
+        # exit(opts.tasks)
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 
         if isinstance(comet_exp, Experiment):
             self.exp = comet_exp
@@ -719,7 +722,7 @@ class Trainer:
         print("Creating generator...")
 
         self.G: OmniGenerator = create_generator(
-            self.opts, device=self.device, no_init=inference, verbose=verbose
+            self.opts, device=self.device, no_init=inference, verbose=verbose,
         )
 
         self.has_painter = get_num_params(self.G.painter) or self.G.load_val_painter()

@@ -123,6 +123,7 @@ class PainterSpadeDecoder(nn.Module):
             shape (tuple): The shape to start sampling from.
             is_input (bool, optional): Whether to divide shape by 2 ** spade_n_up
         """
+
         if isinstance(shape, (list, tuple)):
             self.z_h = shape[-2]
             self.z_w = shape[-1]

@@ -9,6 +9,7 @@ import traceback
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import xxlimited
 import yaml
 from addict import Dict
 from torch import softmax
@@ -22,7 +23,7 @@ from climategan.tutils import init_weights, mix_noise, normalize
 
 
 def create_generator(opts, device="cpu", latent_shape=None, no_init=False, verbose=0):
-    G = OmniGenerator(opts, latent_shape, verbose, no_init)
+    G = OmniGenerator(opts, latent_shape, verbose, no_init, device)
     if no_init:
         print("Sending to", device)
         return G.to(device)
@@ -62,7 +63,7 @@ def create_generator(opts, device="cpu", latent_shape=None, no_init=False, verbo
 
 
 class OmniGenerator(nn.Module):
-    def __init__(self, opts, latent_shape=None, verbose=0, no_init=False):
+    def __init__(self, opts, latent_shape=None, verbose=0, no_init=False, device=None):
         """Creates the generator. All decoders listed in opts.gen will be added
         to the Generator.decoders ModuleDict if opts.gen.DecoderInitial is not True.
         Then can be accessed as G.decoders.T or G.decoders["T"] for instance,
@@ -75,11 +76,13 @@ class OmniGenerator(nn.Module):
         self.opts = opts
         self.verbose = verbose
         self.encoder = None
+        self.device = device
         if any(t in opts.tasks for t in "msd"):
             self.encoder = create_encoder(opts, no_init, verbose)
 
         self.decoders = {}
         self.painter = nn.Module()
+
 
         if "d" in opts.tasks:
             self.decoders["d"] = create_depth_decoder(opts, no_init, verbose)
@@ -100,6 +103,7 @@ class OmniGenerator(nn.Module):
         else:
             if self.verbose > 0:
                 print("  - Add Empty Painter")
+
 
     def __str__(self):
         return strings.generator(self)
@@ -381,7 +385,7 @@ class OmniGenerator(nn.Module):
                 val_painter_opts = Dict(yaml.safe_load(f))
 
             # load checkpoint
-            state_dict = torch.load(ckpt_path)
+            state_dict = torch.load(ckpt_path, map_location=self.device)
 
             # create dummy painter from loaded opts
             painter = create_painter(val_painter_opts)

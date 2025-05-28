@@ -1,0 +1,2 @@
+cd /Users/fawzy/PycharmProjects/climategan
+apply_events.py -b 4 -i images -r config/model/masker --output_path results --overwrite
