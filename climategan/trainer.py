@@ -111,7 +111,7 @@ class Trainer:
         # )
 
         # exit(opts.tasks)
-        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cuda:0 ")
 
         if isinstance(comet_exp, Experiment):
             self.exp = comet_exp
