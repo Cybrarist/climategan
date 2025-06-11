@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Image Processor</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Styles for image preview thumbnails */
+        #preview .preview-item {
+            position: relative;
+            display: inline-block;
+            margin: 5px;
+        }
+        #preview .preview-item img {
+            max-width: 150px;
+            max-height: 150px;
+            display: block;
+        }
+        #preview .preview-item button {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+<div class="container my-4">
+    <h2>Upload Images for Processing</h2>
+    <form action="submit.php" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="images" class="form-label">Select Images</label>
+            <input type="file" class="form-control" id="images" name="images[]" multiple required>
+            <div class="form-text">You can select multiple image files. Previews will appear below.</div>
+        </div>
+        <div id="preview" class="mb-3"></div>
+        <div class="mb-3">
+            <label for="batch_size" class="form-label">Batch Size</label>
+            <input type="number" class="form-control" id="batch_size" name="batch_size" value="4" min="1" required>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="no_time" name="no_time" value="1">
+            <label class="form-check-label" for="no_time">Prevent timing of operation (--no_time)</label>
+        </div>
+        <div class="mb-3">
+            <label for="target_size" class="form-label">Target Size (multiple of 128)</label>
+            <input type="number" class="form-control" id="target_size" name="target_size" value="640" step="128" min="128" required>
+            <div class="form-text">Default is 640. Must be a multiple of 128 (width/height target for processing).</div>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="half" name="half" value="1">
+            <label class="form-check-label" for="half">Use half precision (float16) (--half)</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="no_cloudy" name="no_cloudy" value="1">
+            <label class="form-check-label" for="no_cloudy">Prevent "cloudy" intermediate image (--no_cloudy)</label>
+        </div>
+        <div class="form-check mb-3">
+            <input type="checkbox" class="form-check-input" id="fuse" name="fuse" value="1">
+            <label class="form-check-label" for="fuse">Use batch norm fusion (--fuse)</label>
+        </div>
+        <div class="mb-3">
+            <label for="max_im_width" class="form-label">Max Image Width (--max_im_width)</label>
+            <input type="number" class="form-control" id="max_im_width" name="max_im_width" value="-1">
+            <div class="form-text">-1 for no limit. Otherwise, sets a maximum output width in pixels.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Process Images</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(function(){
+        let fileList = [];
+        $('#images').on('change', function() {
+            fileList = Array.from(this.files);
+            $('#preview').empty();
+            fileList.forEach((file, index) => {
+                if(file.type.startsWith('image')) {
+                    const imgURL = URL.createObjectURL(file);
+                    $('#preview').append(
+                        `<div class="preview-item">
+               <img src="${imgURL}" class="img-thumbnail" alt="Image Preview">
+               <button type="button" class="btn btn-sm btn-danger remove-btn" data-index="${index}">&times;</button>
+             </div>`
+                    );
+                }
+            });
+        });
+
+        $('#preview').on('click', '.remove-btn', function() {
+            const index = $(this).data('index');
+            fileList.splice(index, 1);
+            const dataTransfer = new DataTransfer();
+            fileList.forEach(file => dataTransfer.items.add(file));
+            document.getElementById('images').files = dataTransfer.files;
+            $('#preview').empty();
+            fileList.forEach((file, idx) => {
+                if(file.type.startsWith('image')) {
+                    const imgURL = URL.createObjectURL(file);
+                    $('#preview').append(
+                        `<div class="preview-item">
+               <img src="${imgURL}" class="img-thumbnail" alt="Image Preview">
+               <button type="button" class="btn btn-sm btn-danger remove-btn" data-index="${idx}">&times;</button>
+             </div>`
+                    );
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
